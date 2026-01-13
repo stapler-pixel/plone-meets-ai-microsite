@@ -17,11 +17,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: client
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,11 +30,20 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - name: Install
-        run: pnpm install
+      - name: Install (client)
+        run: pnpm -C client install
 
-      - name: Build
-        run: pnpm build
+      - name: Build (client)
+        run: pnpm -C client build
+
+      - name: Debug: where is index.html?
+        run: |
+          echo "Searching for index.html..."
+          find . -maxdepth 5 -name index.html -print
+          echo "Listing common output folders:"
+          ls -la dist || true
+          ls -la client/dist || true
+          ls -la client/build || true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
