@@ -29,6 +29,7 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
+          cache-dependency-path: client/pnpm-lock.yaml
 
       - name: Install (client)
         run: pnpm -C client install
@@ -36,25 +37,15 @@ jobs:
       - name: Build (client)
         run: pnpm -C client build
 
-      - name: Debug: where is index.html?
+      - name: Debug output folders
         run: |
-          echo "Searching for index.html..."
-          find . -maxdepth 5 -name index.html -print
-          echo "Listing common output folders:"
-          ls -la dist || true
+          echo "---- root ----"
+          ls -la
+          echo "---- client ----"
+          ls -la client
+          echo "---- client/dist ----"
           ls -la client/dist || true
-          ls -la client/build || true
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: client/dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-    steps:
-      - name: Deploy
-        uses: actions/deploy-pages@v4
+          echo "---- dist ----"
+          ls -la dist || true
+          echo "---- find index.html ----"
+          find . -maxdepth 5 -name index.html -print || true
