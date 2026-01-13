@@ -21,6 +21,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
@@ -35,33 +38,23 @@ jobs:
       - name: Build (root)
         run: pnpm build
 
-      # Robust: pack the real output into a fixed folder "site"
       - name: Prepare site folder
         run: |
           rm -rf site
           mkdir -p site
 
-          echo "Looking for build output…"
           if [ -d dist ]; then
-            echo "Using ./dist"
             cp -R dist/* site/
           elif [ -d client/dist ]; then
-            echo "Using ./client/dist"
             cp -R client/dist/* site/
           elif [ -d client/build ]; then
-            echo "Using ./client/build"
             cp -R client/build/* site/
           else
             echo "ERROR: No build output folder found."
-            echo "Top-level folders:"
             ls -la
-            echo "client folder:"
             ls -la client || true
             exit 1
           fi
-
-          echo "Site folder contains:"
-          ls -la site
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -71,8 +64,11 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy
+        id: deployment
         uses: actions/deploy-pages@v4
