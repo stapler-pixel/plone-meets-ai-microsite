@@ -32,29 +32,54 @@ jobs:
         with:
           node-version: 20
 
+      # Install + Build im Repo-Root (weil hier die package.json liegt)
       - name: Install (root)
         run: pnpm install
 
       - name: Build (root)
         run: pnpm build
 
+      # Wir erzeugen einen stabilen Ordner "site/" und kopieren den echten Build-Output hinein,
+      # so dass am Ende site/index.html existiert (wichtig für GitHub Pages).
       - name: Prepare site folder
         run: |
           rm -rf site
           mkdir -p site
 
-          if [ -d dist ]; then
+          echo "Detecting build output folder..."
+
+          if [ -f dist/index.html ]; then
+            echo "Found dist/index.html -> using ./dist"
             cp -R dist/* site/
-          elif [ -d client/dist ]; then
+          elif [ -f client/dist/index.html ]; then
+            echo "Found client/dist/index.html -> using ./client/dist"
             cp -R client/dist/* site/
-          elif [ -d client/build ]; then
+          elif [ -f client/build/index.html ]; then
+            echo "Found client/build/index.html -> using ./client/build"
             cp -R client/build/* site/
           else
-            echo "ERROR: No build output folder found."
+            echo "ERROR: Could not find an index.html in dist/ or client/dist/ or client/build/"
+            echo "--- root listing ---"
             ls -la
+            echo "--- client listing ---"
             ls -la client || true
+            echo "--- search index.html ---"
+            find . -maxdepth 6 -name index.html -print || true
             exit 1
           fi
+
+          echo "--- site listing ---"
+          ls -la site
+
+      - name: Verify index.html exists
+        run: |
+          if [ ! -f site/index.html ]; then
+            echo "ERROR: site/index.html is missing (GitHub Pages will 404)."
+            echo "--- site listing ---"
+            ls -la site || true
+            exit 1
+          fi
+          echo "OK: site/index.html exists."
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
