@@ -32,15 +32,12 @@ jobs:
         with:
           node-version: 20
 
-      # Install + Build im Repo-Root (weil hier die package.json liegt)
       - name: Install (root)
         run: pnpm install
 
       - name: Build (root)
         run: pnpm build
 
-      # Wir erzeugen einen stabilen Ordner "site/" und kopieren den echten Build-Output hinein,
-      # so dass am Ende site/index.html existiert (wichtig für GitHub Pages).
       - name: Prepare site folder
         run: |
           rm -rf site
@@ -48,7 +45,10 @@ jobs:
 
           echo "Detecting build output folder..."
 
-          if [ -f dist/index.html ]; then
+          if [ -f dist/public/index.html ]; then
+            echo "Found dist/public/index.html -> using ./dist/public"
+            cp -R dist/public/* site/
+          elif [ -f dist/index.html ]; then
             echo "Found dist/index.html -> using ./dist"
             cp -R dist/* site/
           elif [ -f client/dist/index.html ]; then
@@ -58,11 +58,7 @@ jobs:
             echo "Found client/build/index.html -> using ./client/build"
             cp -R client/build/* site/
           else
-            echo "ERROR: Could not find an index.html in dist/ or client/dist/ or client/build/"
-            echo "--- root listing ---"
-            ls -la
-            echo "--- client listing ---"
-            ls -la client || true
+            echo "ERROR: Could not find a build index.html in expected locations."
             echo "--- search index.html ---"
             find . -maxdepth 6 -name index.html -print || true
             exit 1
@@ -75,7 +71,6 @@ jobs:
         run: |
           if [ ! -f site/index.html ]; then
             echo "ERROR: site/index.html is missing (GitHub Pages will 404)."
-            echo "--- site listing ---"
             ls -la site || true
             exit 1
           fi
