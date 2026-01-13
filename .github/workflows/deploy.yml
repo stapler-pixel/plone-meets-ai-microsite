@@ -17,7 +17,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
+        steps:
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -25,10 +25,9 @@ jobs:
         uses: pnpm/action-setup@v4
 
       - name: Setup Node
-  uses: actions/setup-node@v4
-  with:
-    node-version: 20
-
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
       - name: Install (client)
         run: pnpm -C client install
@@ -48,3 +47,8 @@ jobs:
           ls -la dist || true
           echo "---- find index.html ----"
           find . -maxdepth 5 -name index.html -print || true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: client/dist
